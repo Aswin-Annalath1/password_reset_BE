@@ -4,7 +4,7 @@ const { db } = require("./db/connection.db");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
-// Importing routes
+// Importing routess
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 
