@@ -101,13 +101,16 @@ const resetPassword = async (req, res) => {
             if (getPRToken) {  //If a password reset token is found
                 const isValidPRToken = await bcrypt.compare(PRToken, getPRToken.hashedPRToken);//check PRToken provided with url link matches the hashed password reset token stored in the database.
                 if (isValidPRToken) {
-                    const hashedPassword = await bcrypt.hash(password, 10); //hashes the new password using bcrypt.hash and updates the user's password in the authModel collection..
-                    authModel.findByIdAndUpdate({ _id: userId }, { $set: { hashedPassword: hashedPassword } }, (err, doc) => {
-                        if (err) {
-                            return res.status(400).send({ message: "Error while resetting password", error: err });
-                        }
-                    });
-                    await getPRToken.remove(); //removeing used password reset token from the database.
+                    const hashedPassword = await bcrypt.hash(password, 10); //hashes the new password using bcrypt.hash...
+                    const updatedUser = await authModel.findByIdAndUpdate( //updates the user's password in the authModel collection..
+                        { _id: userId },
+                        { $set: { hashedPassword: hashedPassword } }
+                      );
+                      if (!updatedUser) {
+                        return res.status(400).send({ message: "Error while resetting password" });
+                      }
+                    // Use deleteOne to remove the document
+                    await passwordResetTokenModel.deleteOne({ userId: userId }); //removeing used password reset token from the database.
 
                     return res.status(200).send({ message: "Password reset successfully" });
                 }
@@ -117,6 +120,7 @@ const resetPassword = async (req, res) => {
         }
         res.status(400).send({ message: "Password is required" });
     } catch (error) {
+        console.error("Error resetting password:", error);
         res.status(500).send({ message: "Internal server error", error: error });
     }
 };
